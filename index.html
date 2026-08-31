@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Registrasi Wajah Presensi</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: fit-content;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Viewfinder Container */
+    .viewfinder-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background-color: #0f172a;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror view untuk kamera depan */
+    }
+
+    .camera-placeholder {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+    }
+
+    .camera-placeholder svg {
+      width: 48px;
+      height: 48px;
+      stroke-width: 1.5;
+    }
+
+    /* Overlay Frame */
+    .face-guide {
+      position: absolute;
+      width: 60%;
+      height: 75%;
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      transition: border-color 0.3s ease;
+    }
+
+    .face-guide.active {
+      border-color: #22c55e;
+      border-style: solid;
+    }
+
+    /* Status Banner */
+    .status-box {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      text-align: center;
+      font-weight: 500;
+      background-color: #f1f5f9;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-box.info { background-color: #eff6ff; color: #1d4ed8; }
+    .status-box.success { background-color: #f0fdf4; color: #15803d; }
+    .status-box.error { background-color: #fef2f2; color: #b91c1c; }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      background-color: var(--primary-hover);
+    }
+
+    .btn-primary:disabled {
+      background-color: #cbd5e1;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Modal Popup */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    @media (min-width: 480px) {
+      .modal-overlay {
+        align-items: center;
+        padding: 20px;
+      }
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background-color: var(--card-bg);
+      width: 100%;
+      max-width: 440px;
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px;
+      box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    @media (min-width: 480px) {
+      .modal-card {
+        border-radius: 20px;
+        transform: translateY(20px);
+      }
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .modal-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+      flex: 1;
+    }
+
+    .btn-secondary:active {
+      background-color: #e2e8f0;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Load Face-API.js via CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="header">
+      <h1>Registrasi Wajah</h1>
+      <p>Pendaftaran Data Wajah Karyawan</p>
+    </div>
+
+    <!-- Viewfinder Kamera -->
+    <div class="viewfinder-wrapper">
+      <video id="webcam" autoplay muted playsinline></video>
+      <div id="cameraPlaceholder" class="camera-placeholder">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+        </svg>
+        <span>Kamera Belum Aktif</span>
+      </div>
+      <div id="faceGuide" class="face-guide"></div>
+    </div>
+
+    <!-- Status Information -->
+    <div id="statusBox" class="status-box">
+      Memuat model AI pengenal wajah...
+    </div>
+
+    <!-- Tombol Rekam Wajah -->
+    <button id="btnScan" class="btn btn-primary" onclick="mulaiRekamWajah()" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      Rekam Data Wajah
+    </button>
+  </div>
+
+  <!-- Modal Popup Konfirmasi & Nama -->
+  <div id="modalInput" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Simpan Data Wajah</h2>
+        <p>Wajah berhasil terdeteksi! Masukkan nama karyawan untuk melanjutkan.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="namaKaryawan">Nama Lengkap Karyawan</label>
+        <input type="text" id="namaKaryawan" placeholder="Contoh: Budi Santoso" autocomplete="off" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="tutupModal()">Batal</button>
+        <button id="btnKirim" class="btn btn-primary" onclick="kirimDataKeSpreadsheet()" style="flex: 2;">
+          <span id="btnKirimText">Kirim Data Wajah</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URL Google Apps Script milikmu
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwzrexyIgiXvBB0NEGJzXS5FQWN33xBCSX6cwccB6W4cOVE_0Pwls0lTuMkaI07uP2oxA/exec";
+
+    const video = document.getElementById('webcam');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+    const faceGuide = document.getElementById('faceGuide');
+    const statusBox = document.getElementById('statusBox');
+    const btnScan = document.getElementById('btnScan');
+    const modalInput = document.getElementById('modalInput');
+    const namaInput = document.getElementById('namaKaryawan');
+    const btnKirim = document.getElementById('btnKirim');
+    const btnKirimText = document.getElementById('btnKirimText');
+
+    let currentVectorWajah = null;
+    let isModelLoaded = false;
+
+    // 1. Inisialisasi Model AI dan Kamera
+ // Inisialisasi Model AI dan Kamera (Mode CPU Safe)
+async function initApp() {
+  try {
+    updateStatus("Memuat model Face-API (CPU mode)...", "info");
+    
+    // 1. Paksa TensorFlow menggunakan backend CPU agar tidak melempar error WebGL/WASM
+    if (typeof faceapi !== 'undefined' && faceapi.tf) {
+      await faceapi.tf.setBackend('cpu');
+      await faceapi.tf.ready();
+    }
+
+    // 2. Gunakan URL Model Standard resmi yang terjamin 100% komplit
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
+    isModelLoaded = true;
+    updateStatus("Model AI siap. Membuka kamera depan...", "info");
+    
+    startCamera();
+  } catch (err) {
+    updateStatus("Gagal memuat model AI: " + err.message, "error");
+    console.error("Init Error:", err);
+  }
+}
+
+    // 2. Akses Kamera Depan HP
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "user", // Mendesak pakai kamera depan
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }, 
+        audio: false 
+      })
+      .then(stream => {
+        video.srcObject = stream;
+        cameraPlaceholder.style.display = 'none';
+        btnScan.disabled = false;
+        updateStatus("Posisikan wajah tepat di dalam lingkaran", "info");
+      })
+      .catch(err => {
+        updateStatus("Gagal mengakses kamera depan: " + err.message, "error");
+        console.error("Camera Error:", err);
+      });
+    }
+
+    // 3. Rekam & Deteksi Wajah
+    async function mulaiRekamWajah() {
+      if (!isModelLoaded) return;
+
+      btnScan.disabled = true;
+      updateStatus("Mendeteksi wajah...", "info");
+
+      // Deteksi 1 wajah dari stream video
+      const detection = await faceapi.detectSingleFace(video)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        updateStatus("Wajah tidak ditemukan! Pastikan wajah terlihat jelas.", "error");
+        faceGuide.classList.remove('active');
+        btnScan.disabled = false;
+        return;
+      }
+
+      // Berhasil mendeteksi wajah!
+      faceGuide.classList.add('active');
+      currentVectorWajah = Array.from(detection.descriptor); // Konversi Float32Array ke Array standar
+      
+      updateStatus("Wajah berhasil direkam!", "success");
+      
+      // Tampilkan Popup Nama setelah jeda singkat
+      setTimeout(() => {
+        bukaModal();
+        btnScan.disabled = false;
+      }, 500);
+    }
+
+    // 4. Modal Handler
+    function bukaModal() {
+      modalInput.classList.add('active');
+      namaInput.value = '';
+      setTimeout(() => namaInput.focus(), 300);
+    }
+
+    function tutupModal() {
+      modalInput.classList.remove('active');
+      faceGuide.classList.remove('active');
+      updateStatus("Posisikan wajah tepat di dalam lingkaran", "info");
+    }
+
+    // 5. Kirim Data ke Google Apps Script (doPost)
+    async function kirimDataKeSpreadsheet() {
+      const nama = namaInput.value.trim();
+
+      if (!nama) {
+        alert("Silakan masukkan nama karyawan terlebih dahulu!");
+        namaInput.focus();
+        return;
+      }
+
+      if (!currentVectorWajah) {
+        alert("Data wajah belum terekam. Silakan rekam ulang.");
+        tutupModal();
+        return;
+      }
+
+      // UI Loading State
+      btnKirim.disabled = true;
+      btnKirimText.innerHTML = `<div class="spinner"></div> Menyimpan...`;
+
+      try {
+        const payload = {
+          nama: nama,
+          vectorWajah: currentVectorWajah
+        };
+
+        // Mengirim data POST JSON ke Google Apps Script
+        const response = await fetch(URL_APPS_SCRIPT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8', // Hindari CORS preflight pada GS
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+          tutupModal();
+          updateStatus(`Berhasil! Data ${nama} telah tersimpan di Sheet1.`, "success");
+          currentVectorWajah = null;
+        } else {
+          alert("Gagal menyimpan ke Google Sheets: " + result.message);
+        }
+
+      } catch (err) {
+        console.error("Fetch Error:", err);
+        alert("Terjadi kesalahan saat mengirim data. Pastikan jaringan stabil.");
+      } finally {
+        btnKirim.disabled = false;
+        btnKirimText.innerText = "Kirim Data Wajah";
+      }
+    }
+
+    // Helper Status
+    function updateStatus(message, type) {
+      statusBox.innerText = message;
+      statusBox.className = `status-box ${type}`;
+    }
+
+    // Jalankan App saat halaman siap
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
