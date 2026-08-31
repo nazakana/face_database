@@ -47,23 +47,11 @@
       height: fit-content;
     }
 
-    .header {
-      text-align: center;
-    }
+    .header { text-align: center; }
+    .header h1 { font-size: 1.35rem; font-weight: 700; color: var(--text-main); }
+    .header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-    .header h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .header p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Tab Switcher Layout */
+    /* Tab Switcher */
     .tab-nav {
       display: flex;
       background-color: #f1f5f9;
@@ -91,17 +79,10 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.06);
     }
 
-    .tab-content {
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .tab-content { display: none; flex-direction: column; gap: 16px; }
+    .tab-content.active { display: flex; }
 
-    .tab-content.active {
-      display: flex;
-    }
-
-    /* Viewfinder Container */
+    /* Viewfinder */
     .viewfinder-wrapper {
       position: relative;
       width: 100%;
@@ -131,11 +112,7 @@
       color: #94a3b8;
     }
 
-    .camera-placeholder svg {
-      width: 48px;
-      height: 48px;
-      stroke-width: 1.5;
-    }
+    .camera-placeholder svg { width: 48px; height: 48px; stroke-width: 1.5; }
 
     /* Overlay Frame */
     .face-guide {
@@ -148,12 +125,9 @@
       transition: border-color 0.3s ease;
     }
 
-    .face-guide.active {
-      border-color: #22c55e;
-      border-style: solid;
-    }
+    .face-guide.active { border-color: #22c55e; border-style: solid; }
 
-    /* Status Banner */
+    /* Status Box */
     .status-box {
       padding: 12px 16px;
       border-radius: 12px;
@@ -189,30 +163,13 @@
       transition: all 0.2s ease;
     }
 
-    .btn-primary {
-      background-color: var(--primary);
-      color: white;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    }
+    .btn-primary { background-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+    .btn-primary:active { transform: scale(0.98); background-color: var(--primary-hover); }
+    .btn-primary:disabled { background-color: #cbd5e1; box-shadow: none; cursor: not-allowed; }
 
-    .btn-primary:active {
-      transform: scale(0.98);
-      background-color: var(--primary-hover);
-    }
+    .btn-success { background-color: var(--success); color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25); }
 
-    .btn-primary:disabled {
-      background-color: #cbd5e1;
-      box-shadow: none;
-      cursor: not-allowed;
-    }
-
-    .btn-success {
-      background-color: var(--success);
-      color: white;
-      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
-    }
-
-    /* Modal Popup */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -227,14 +184,9 @@
       transition: opacity 0.3s ease;
     }
 
-    @media (min-width: 480px) {
-      .modal-overlay { align-items: center; padding: 20px; }
-    }
+    @media (min-width: 480px) { .modal-overlay { align-items: center; padding: 20px; } }
 
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
     .modal-card {
       background-color: var(--card-bg);
@@ -250,48 +202,19 @@
       gap: 16px;
     }
 
-    @media (min-width: 480px) {
-      .modal-card { border-radius: 20px; transform: translateY(20px); }
-    }
+    @media (min-width: 480px) { .modal-card { border-radius: 20px; transform: translateY(20px); } }
 
     .modal-overlay.active .modal-card { transform: translateY(0); }
 
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 0.875rem; font-weight: 600; }
+    .input-group input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); font-size: 1rem; outline: none; }
 
-    .input-group label {
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-secondary { background-color: #f1f5f9; color: var(--text-main); flex: 1; }
 
-    .input-group input {
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      font-size: 1rem;
-      outline: none;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    .btn-secondary {
-      background-color: #f1f5f9;
-      color: var(--text-main);
-      flex: 1;
-    }
-
-    /* Spinner */
     .spinner {
-      width: 20px;
-      height: 20px;
+      width: 20px; height: 20px;
       border: 3px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       border-top-color: white;
@@ -311,13 +234,13 @@
       <p>Pendaftaran & Testing Pengenalan Client-Side</p>
     </div>
 
-    <!-- Tab Switcher -->
+    <!-- Tab Navigasi -->
     <div class="tab-nav">
       <button class="tab-btn active" onclick="switchTab('register')">1. Registrasi Wajah</button>
       <button class="tab-btn" onclick="switchTab('test')">2. Tes Presensi</button>
     </div>
 
-    <!-- Viewfinder Kamera (Berbagi Kamera untuk Kedua Tab) -->
+    <!-- Viewfinder Kamera -->
     <div class="viewfinder-wrapper">
       <video id="webcam" autoplay muted playsinline></video>
       <div id="cameraPlaceholder" class="camera-placeholder">
@@ -330,7 +253,7 @@
       <div id="faceGuide" class="face-guide"></div>
     </div>
 
-    <!-- Status Information -->
+    <!-- Status Box -->
     <div id="statusBox" class="status-box">
       Memuat model AI pengenal wajah...
     </div>
@@ -346,7 +269,7 @@
       </button>
     </div>
 
-    <!-- TAB 2: TES PRESI/PENGENALAN INSTAN -->
+    <!-- TAB 2: TES PRESI -->
     <div id="tabTest" class="tab-content">
       <button id="btnTest" class="btn btn-success" onclick="tesPengenalanWajah()" disabled>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -357,7 +280,7 @@
     </div>
   </div>
 
-  <!-- Modal Popup Registrasi -->
+  <!-- Modal Input -->
   <div id="modalInput" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
@@ -393,9 +316,8 @@
 
     let currentVectorWajah = null;
     let isModelLoaded = false;
-    let registeredUsers = []; // Menyimpan database lokal hasil pencocokan instan
+    let registeredUsers = [];
 
-    // Switch Tab View
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -407,12 +329,12 @@
       } else {
         document.querySelectorAll('.tab-btn')[1].classList.add('active');
         document.getElementById('tabTest').classList.add('active');
-        updateStatus("Modus Tes: Ambil presensi instan", "info");
+        updateStatus("Modus Tes: Memutakhirkan data & siap scan...", "info");
+        muatDataUserLokal(); // Sinkronisasi ulang data user dari Google Sheets
       }
       faceGuide.classList.remove('active');
     }
 
-    // 1. Inisialisasi Model AI & Kamera
     async function initApp() {
       try {
         updateStatus("Memuat model Face-API (CPU mode)...", "info");
@@ -431,7 +353,7 @@
         updateStatus("Model AI siap. Membuka kamera...", "info");
         
         startCamera();
-        muatDataUserLokal(); // Muat data registered users dari spreadsheet untuk pencocokan instan browser
+        muatDataUserLokal();
       } catch (err) {
         updateStatus("Gagal memuat model AI: " + err.message, "error");
       }
@@ -454,21 +376,33 @@
       });
     }
 
-    // 2. Ambil & Cache Data User dari Google Sheets untuk Komparasi Browser (Client-Side)
+    // Fungsi Fetch & Sanitasi Tipe Data Vector (Penting)
     async function muatDataUserLokal() {
       try {
         const res = await fetch(`${URL_APPS_SCRIPT}?action=getUsers`);
         const result = await res.json();
-        if (result.status === "success") {
-          registeredUsers = result.data;
+        
+        if (result.status === "success" && Array.isArray(result.data)) {
+          registeredUsers = result.data.map(user => {
+            let vec = user.vectorWajah;
+            // Jika dikirim sebagai JSON string dari Apps Script, parse terlebih dahulu
+            if (typeof vec === 'string') {
+              try { vec = JSON.parse(vec); } catch(e) {}
+            }
+            // Konversi elemen array menjadi Float32Array agar terbaca sah oleh faceapi
+            if (Array.isArray(vec)) {
+              vec = new Float32Array(vec.map(Number));
+            }
+            return { nama: user.nama, vectorWajah: vec };
+          });
           console.log("Database user lokal berhasil disinkronisasi:", registeredUsers.length, "user");
+          updateStatus(`Database siap (${registeredUsers.length} user terdaftar).`, "info");
         }
       } catch (err) {
         console.warn("Gagal pramuat data user:", err);
       }
     }
 
-    // 3. TAB 1: Fitur Registrasi Wajah
     async function mulaiRekamWajah() {
       if (!isModelLoaded) return;
       btnScan.disabled = true;
@@ -495,7 +429,7 @@
       }, 400);
     }
 
-    // 4. TAB 2: Fitur Tes Pengenalan Wajah Client-Side Instan (Sat-Set)
+    // Fungsi Tes Pengenalan Client-Side
     async function tesPengenalanWajah() {
       if (!isModelLoaded) return;
       btnTest.disabled = true;
@@ -506,20 +440,27 @@
         .withFaceDescriptor();
 
       if (!detection) {
-        updateStatus("Wajah tidak terdeteksi! Coba panggil ulang posisi.", "error");
+        updateStatus("Wajah tidak terdeteksi! Pastikan wajah jelas di kamera.", "error");
+        btnTest.disabled = false;
+        return;
+      }
+
+      if (registeredUsers.length === 0) {
+        updateStatus("Database lokal kosong. Silakan registrasi dahulu.", "error");
         btnTest.disabled = false;
         return;
       }
 
       const inputDescriptor = detection.descriptor;
       let matchFound = null;
-      let minDistance = 0.55; // Ambang batas kemiripan Euclidean Distance (Makin kecil makin mirip)
+      let minDistance = 0.60; // Toleransi threshold Euclidean Distance standard face-api
 
-      // Algoritma Komparasi Euclidean Distance Langsung di Browser
+      // Iterasi komparasi cepat (Client-Side)
       registeredUsers.forEach(user => {
-        if (!user.vectorWajah) return;
+        if (!user.vectorWajah || !(user.vectorWajah instanceof Float32Array || Array.isArray(user.vectorWajah))) return;
+        
         const dist = faceapi.euclideanDistance(inputDescriptor, user.vectorWajah);
-        if (dist < minDistance) {
+        if (!isNaN(dist) && dist < minDistance) {
           minDistance = dist;
           matchFound = user.nama;
         }
@@ -527,16 +468,15 @@
 
       if (matchFound) {
         faceGuide.classList.add('active');
-        updateStatus(`TERKENALI: Hello, ${matchFound}! (Dist: ${minDistance.toFixed(2)})`, "success");
+        updateStatus(`TERKENALI: ${matchFound} (Kemiripan: ${(1 - minDistance).toFixed(2)})`, "success");
       } else {
         faceGuide.classList.remove('active');
-        updateStatus("Wajah tidak dikenali dalam database!", "error");
+        updateStatus("Wajah tidak cocok dengan data pengguna manapun!", "error");
       }
 
       btnTest.disabled = false;
     }
 
-    // Modal Control & API Sender
     function bukaModal() {
       modalInput.classList.add('active');
       namaInput.value = '';
@@ -574,8 +514,12 @@
         if (result.status === "success") {
           tutupModal();
           updateStatus(`Berhasil! Data ${nama} telah didaftarkan.`, "success");
-          // Tambahkan data ke local cache agar langsung bisa dites di Tab Kanan
-          registeredUsers.push({ nama: nama, vectorWajah: currentVectorWajah });
+          
+          // Masukkan ke cache lokal dalam bentuk Float32Array agar bisa langsung tes tanpa refresh halaman
+          registeredUsers.push({
+            nama: nama,
+            vectorWajah: new Float32Array(currentVectorWajah)
+          });
           currentVectorWajah = null;
         } else {
           alert("Gagal: " + result.message);
