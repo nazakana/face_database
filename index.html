@@ -300,244 +300,259 @@
     </div>
   </div>
 
-  <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwzrexyIgiXvBB0NEGJzXS5FQWN33xBCSX6cwccB6W4cOVE_0Pwls0lTuMkaI07uP2oxA/exec";
+<script>
+  const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwzrexyIgiXvBB0NEGJzXS5FQWN33xBCSX6cwccB6W4cOVE_0Pwls0lTuMkaI07uP2oxA/exec";
 
-    const video = document.getElementById('webcam');
-    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
-    const faceGuide = document.getElementById('faceGuide');
-    const statusBox = document.getElementById('statusBox');
-    const btnScan = document.getElementById('btnScan');
-    const btnTest = document.getElementById('btnTest');
-    const modalInput = document.getElementById('modalInput');
-    const namaInput = document.getElementById('namaKaryawan');
-    const btnKirim = document.getElementById('btnKirim');
-    const btnKirimText = document.getElementById('btnKirimText');
+  const video = document.getElementById('webcam');
+  const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+  const faceGuide = document.getElementById('faceGuide');
+  const statusBox = document.getElementById('statusBox');
+  const btnScan = document.getElementById('btnScan');
+  const btnTest = document.getElementById('btnTest');
+  const modalInput = document.getElementById('modalInput');
+  const namaInput = document.getElementById('namaKaryawan');
+  const btnKirim = document.getElementById('btnKirim');
+  const btnKirimText = document.getElementById('btnKirimText');
 
-    let currentVectorWajah = null;
-    let isModelLoaded = false;
-    let registeredUsers = [];
+  let currentVectorWajah = null;
+  let isModelLoaded = false;
+  let registeredUsers = [];
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-      if (tabName === 'register') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('tabRegister').classList.add('active');
-        updateStatus("Modus Registrasi: Posisikan wajah di dalam lingkaran", "info");
-      } else {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('tabTest').classList.add('active');
-        updateStatus("Modus Tes: Memutakhirkan data & siap scan...", "info");
-        muatDataUserLokal(); // Sinkronisasi ulang data user dari Google Sheets
-      }
-      faceGuide.classList.remove('active');
+    if (tabName === 'register') {
+      document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      document.getElementById('tabRegister').classList.add('active');
+      updateStatus("Modus Registrasi: Posisikan wajah di dalam lingkaran", "info");
+    } else {
+      document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      document.getElementById('tabTest').classList.add('active');
+      updateStatus("Modus Tes: Memutakhirkan data & siap scan...", "info");
+      muatDataUserLokal();
     }
+    faceGuide.classList.remove('active');
+  }
 
-    async function initApp() {
-      try {
-        updateStatus("Memuat model Face-API (CPU mode)...", "info");
-        
-        if (typeof faceapi !== 'undefined' && faceapi.tf) {
-          await faceapi.tf.setBackend('cpu');
-          await faceapi.tf.ready();
-        }
-
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-
-        isModelLoaded = true;
-        updateStatus("Model AI siap. Membuka kamera...", "info");
-        
-        startCamera();
-        muatDataUserLokal();
-      } catch (err) {
-        updateStatus("Gagal memuat model AI: " + err.message, "error");
-      }
-    }
-
-    function startCamera() {
-      navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, 
-        audio: false 
-      })
-      .then(stream => {
-        video.srcObject = stream;
-        cameraPlaceholder.style.display = 'none';
-        btnScan.disabled = false;
-        btnTest.disabled = false;
-        updateStatus("Posisikan wajah tepat di dalam lingkaran", "info");
-      })
-      .catch(err => {
-        updateStatus("Gagal mengakses kamera: " + err.message, "error");
-      });
-    }
-
-    // Fungsi Fetch & Sanitasi Tipe Data Vector (Penting)
-    async function muatDataUserLokal() {
-      try {
-        const res = await fetch(`${URL_APPS_SCRIPT}?action=getUsers`);
-        const result = await res.json();
-        
-        if (result.status === "success" && Array.isArray(result.data)) {
-          registeredUsers = result.data.map(user => {
-            let vec = user.vectorWajah;
-            // Jika dikirim sebagai JSON string dari Apps Script, parse terlebih dahulu
-            if (typeof vec === 'string') {
-              try { vec = JSON.parse(vec); } catch(e) {}
-            }
-            // Konversi elemen array menjadi Float32Array agar terbaca sah oleh faceapi
-            if (Array.isArray(vec)) {
-              vec = new Float32Array(vec.map(Number));
-            }
-            return { nama: user.nama, vectorWajah: vec };
-          });
-          console.log("Database user lokal berhasil disinkronisasi:", registeredUsers.length, "user");
-          updateStatus(`Database siap (${registeredUsers.length} user terdaftar).`, "info");
-        }
-      } catch (err) {
-        console.warn("Gagal pramuat data user:", err);
-      }
-    }
-
-    async function mulaiRekamWajah() {
-      if (!isModelLoaded) return;
-      btnScan.disabled = true;
-      updateStatus("Mendeteksi wajah...", "info");
-
-      const detection = await faceapi.detectSingleFace(video)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (!detection) {
-        updateStatus("Wajah tidak ditemukan! Pastikan posisi pas.", "error");
-        faceGuide.classList.remove('active');
-        btnScan.disabled = false;
-        return;
-      }
-
-      faceGuide.classList.add('active');
-      currentVectorWajah = Array.from(detection.descriptor);
-      updateStatus("Wajah terdeteksi!", "success");
+  async function initApp() {
+    try {
+      updateStatus("Memuat model AI ringan (Akselerasi GPU)...", "info");
       
-      setTimeout(() => {
-        bukaModal();
-        btnScan.disabled = false;
-      }, 400);
+      // OPTIMALISASI 1: Aktifkan WebGL (GPU) alih-alih CPU
+      if (typeof faceapi !== 'undefined' && faceapi.tf) {
+        await faceapi.tf.setBackend('webgl');
+        await faceapi.tf.ready();
+      }
+
+      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+      
+      // OPTIMALISASI 2: Gunakan tinyFaceDetector sebagai pengganti ssdMobilenetv1
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+
+      isModelLoaded = true;
+      updateStatus("Model AI Siap! Membuka kamera...", "info");
+      
+      startCamera();
+      muatDataUserLokal();
+    } catch (err) {
+      // Fallback ke CPU jika WebGL tidak didukung perangkat
+      try {
+        await faceapi.tf.setBackend('cpu');
+        await faceapi.tf.ready();
+        updateStatus("Memuat mode CPU fallback...", "info");
+      } catch(e) {}
+      updateStatus("Gagal memuat model AI: " + err.message, "error");
+    }
+  }
+
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, 
+      audio: false 
+    })
+    .then(stream => {
+      video.srcObject = stream;
+      cameraPlaceholder.style.display = 'none';
+      btnScan.disabled = false;
+      btnTest.disabled = false;
+      updateStatus("Posisikan wajah tepat di dalam lingkaran", "info");
+    })
+    .catch(err => {
+      updateStatus("Gagal mengakses kamera: " + err.message, "error");
+    });
+  }
+
+  async function muatDataUserLokal() {
+    try {
+      const res = await fetch(`${URL_APPS_SCRIPT}?action=getUsers`);
+      const result = await res.json();
+      
+      const rawData = result.data || result; // Menangani respon array maupun objek
+      
+      if (Array.isArray(rawData)) {
+        registeredUsers = rawData.map(user => {
+          let vec = user.vectorWajah;
+          if (typeof vec === 'string') {
+            try { vec = JSON.parse(vec); } catch(e) {}
+          }
+          if (Array.isArray(vec)) {
+            vec = new Float32Array(vec.map(Number));
+          }
+          return { nama: user.nama, vectorWajah: vec };
+        });
+        updateStatus(`Database siap (${registeredUsers.length} user terdaftar).`, "info");
+      }
+    } catch (err) {
+      console.warn("Gagal pramuat data user:", err);
+    }
+  }
+
+  // OPTIMALISASI 3: Pengaturan TinyFaceDetectorOptions agar scanning cepat
+  const detectorOptions = new faceapi.TinyFaceDetectorOptions({
+    inputSize: 224,      // Ukuran pemindaian lebih kecil = Jauh Lebih Cepat (Default: 416)
+    scoreThreshold: 0.5  // Ambang batas deteksi awal
+  });
+
+  async function mulaiRekamWajah() {
+    if (!isModelLoaded) return;
+    btnScan.disabled = true;
+    updateStatus("Mendeteksi wajah...", "info");
+
+    const detection = await faceapi.detectSingleFace(video, detectorOptions)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection) {
+      updateStatus("Wajah tidak ditemukan! Pastikan posisi pas.", "error");
+      faceGuide.classList.remove('active');
+      btnScan.disabled = false;
+      return;
     }
 
-    // Fungsi Tes Pengenalan Client-Side
-    async function tesPengenalanWajah() {
-      if (!isModelLoaded) return;
-      btnTest.disabled = true;
-      updateStatus("Memindai wajah untuk presensi...", "info");
+    faceGuide.classList.add('active');
+    currentVectorWajah = Array.from(detection.descriptor);
+    updateStatus("Wajah terdeteksi!", "success");
+    
+    setTimeout(() => {
+      bukaModal();
+      btnScan.disabled = false;
+    }, 200);
+  }
 
-      const detection = await faceapi.detectSingleFace(video)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
+  async function tesPengenalanWajah() {
+    if (!isModelLoaded) return;
+    btnTest.disabled = true;
+    updateStatus("Memindai wajah...", "info");
 
-      if (!detection) {
-        updateStatus("Wajah tidak terdeteksi! Pastikan wajah jelas di kamera.", "error");
-        btnTest.disabled = false;
-        return;
+    const t0 = performance.now(); // Ukur kecepatan eksekusi
+
+    const detection = await faceapi.detectSingleFace(video, detectorOptions)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection) {
+      updateStatus("Wajah tidak terdeteksi! Pastikan cahaya cukup.", "error");
+      btnTest.disabled = false;
+      return;
+    }
+
+    if (registeredUsers.length === 0) {
+      updateStatus("Database lokal kosong. Silakan registrasi dahulu.", "error");
+      btnTest.disabled = false;
+      return;
+    }
+
+    const inputDescriptor = detection.descriptor;
+    let matchFound = null;
+    let minDistance = 0.60;
+
+    registeredUsers.forEach(user => {
+      if (!user.vectorWajah || !(user.vectorWajah instanceof Float32Array || Array.isArray(user.vectorWajah))) return;
+      
+      const dist = faceapi.euclideanDistance(inputDescriptor, user.vectorWajah);
+      if (!isNaN(dist) && dist < minDistance) {
+        minDistance = dist;
+        matchFound = user.nama;
       }
+    });
 
-      if (registeredUsers.length === 0) {
-        updateStatus("Database lokal kosong. Silakan registrasi dahulu.", "error");
-        btnTest.disabled = false;
-        return;
-      }
+    const t1 = performance.now();
+    const durasi = ((t1 - t0) / 1000).toFixed(2); // Menghitung detik
 
-      const inputDescriptor = detection.descriptor;
-      let matchFound = null;
-      let minDistance = 0.60; // Toleransi threshold Euclidean Distance standard face-api
+    if (matchFound) {
+      faceGuide.classList.add('active');
+      updateStatus(`TERKENALI: ${matchFound} (${durasi} dtk)`, "success");
+    } else {
+      faceGuide.classList.remove('active');
+      updateStatus(`Wajah tidak cocok! (${durasi} dtk)`, "error");
+    }
 
-      // Iterasi komparasi cepat (Client-Side)
-      registeredUsers.forEach(user => {
-        if (!user.vectorWajah || !(user.vectorWajah instanceof Float32Array || Array.isArray(user.vectorWajah))) return;
-        
-        const dist = faceapi.euclideanDistance(inputDescriptor, user.vectorWajah);
-        if (!isNaN(dist) && dist < minDistance) {
-          minDistance = dist;
-          matchFound = user.nama;
-        }
+    btnTest.disabled = false;
+  }
+
+  function bukaModal() {
+    modalInput.classList.add('active');
+    namaInput.value = '';
+    setTimeout(() => namaInput.focus(), 200);
+  }
+
+  function tutupModal() {
+    modalInput.classList.remove('active');
+    faceGuide.classList.remove('active');
+  }
+
+  async function kirimDataKeSpreadsheet() {
+    const nama = namaInput.value.trim();
+    if (!nama) { alert("Masukkan nama karyawan!"); return; }
+    if (!currentVectorWajah) return;
+
+    btnKirim.disabled = true;
+    btnKirimText.innerHTML = `<div class="spinner"></div> Menyimpan...`;
+
+    try {
+      const payload = {
+        action: "register",
+        nama: nama,
+        vectorWajah: currentVectorWajah
+      };
+
+      const response = await fetch(URL_APPS_SCRIPT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
       });
 
-      if (matchFound) {
-        faceGuide.classList.add('active');
-        updateStatus(`TERKENALI: ${matchFound} (Kemiripan: ${(1 - minDistance).toFixed(2)})`, "success");
-      } else {
-        faceGuide.classList.remove('active');
-        updateStatus("Wajah tidak cocok dengan data pengguna manapun!", "error");
-      }
+      const result = await response.json();
 
-      btnTest.disabled = false;
-    }
-
-    function bukaModal() {
-      modalInput.classList.add('active');
-      namaInput.value = '';
-      setTimeout(() => namaInput.focus(), 300);
-    }
-
-    function tutupModal() {
-      modalInput.classList.remove('active');
-      faceGuide.classList.remove('active');
-    }
-
-    async function kirimDataKeSpreadsheet() {
-      const nama = namaInput.value.trim();
-      if (!nama) { alert("Masukkan nama karyawan!"); return; }
-      if (!currentVectorWajah) return;
-
-      btnKirim.disabled = true;
-      btnKirimText.innerHTML = `<div class="spinner"></div> Menyimpan...`;
-
-      try {
-        const payload = {
-          action: "register",
+      if (result.status === "success") {
+        tutupModal();
+        updateStatus(`Berhasil! Data ${nama} telah didaftarkan.`, "success");
+        
+        registeredUsers.push({
           nama: nama,
-          vectorWajah: currentVectorWajah
-        };
-
-        const response = await fetch(URL_APPS_SCRIPT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
+          vectorWajah: new Float32Array(currentVectorWajah)
         });
-
-        const result = await response.json();
-
-        if (result.status === "success") {
-          tutupModal();
-          updateStatus(`Berhasil! Data ${nama} telah didaftarkan.`, "success");
-          
-          // Masukkan ke cache lokal dalam bentuk Float32Array agar bisa langsung tes tanpa refresh halaman
-          registeredUsers.push({
-            nama: nama,
-            vectorWajah: new Float32Array(currentVectorWajah)
-          });
-          currentVectorWajah = null;
-        } else {
-          alert("Gagal: " + result.message);
-        }
-      } catch (err) {
-        alert("Terjadi kesalahan koneksi.");
-      } finally {
-        btnKirim.disabled = false;
-        btnKirimText.innerText = "Kirim Data Wajah";
+        currentVectorWajah = null;
+      } else {
+        alert("Gagal: " + result.message);
       }
+    } catch (err) {
+      alert("Terjadi kesalahan koneksi.");
+    } finally {
+      btnKirim.disabled = false;
+      btnKirimText.innerText = "Kirim Data Wajah";
     }
+  }
 
-    function updateStatus(message, type) {
-      statusBox.innerText = message;
-      statusBox.className = `status-box ${type}`;
-    }
+  function updateStatus(message, type) {
+    statusBox.innerText = message;
+    statusBox.className = `status-box ${type}`;
+  }
 
-    window.addEventListener('DOMContentLoaded', initApp);
-  </script>
+  window.addEventListener('DOMContentLoaded', initApp);
+</script>
 </body>
 </html>
