@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Registrasi Wajah Presensi</title>
+  <title>Sistem Presensi & Pengenalan Wajah</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -36,14 +36,14 @@
 
     .app-container {
       width: 100%;
-      max-width: 440px;
+      max-width: 480px;
       background-color: var(--card-bg);
       border-radius: 20px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-      padding: 24px 20px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
       height: fit-content;
     }
 
@@ -58,9 +58,47 @@
     }
 
     .header p {
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       margin-top: 4px;
+    }
+
+    /* Tab Switcher Layout */
+    .tab-nav {
+      display: flex;
+      background-color: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background-color: var(--card-bg);
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-content.active {
+      display: flex;
     }
 
     /* Viewfinder Container */
@@ -81,7 +119,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* Mirror view untuk kamera depan */
+      transform: scaleX(-1);
     }
 
     .camera-placeholder {
@@ -168,13 +206,16 @@
       cursor: not-allowed;
     }
 
+    .btn-success {
+      background-color: var(--success);
+      color: white;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+    }
+
     /* Modal Popup */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background-color: rgba(15, 23, 42, 0.6);
       backdrop-filter: blur(4px);
       display: flex;
@@ -187,10 +228,7 @@
     }
 
     @media (min-width: 480px) {
-      .modal-overlay {
-        align-items: center;
-        padding: 20px;
-      }
+      .modal-overlay { align-items: center; padding: 20px; }
     }
 
     .modal-overlay.active {
@@ -213,26 +251,10 @@
     }
 
     @media (min-width: 480px) {
-      .modal-card {
-        border-radius: 20px;
-        transform: translateY(20px);
-      }
+      .modal-card { border-radius: 20px; transform: translateY(20px); }
     }
 
-    .modal-overlay.active .modal-card {
-      transform: translateY(0);
-    }
-
-    .modal-header h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-
-    .modal-header p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+    .modal-overlay.active .modal-card { transform: translateY(0); }
 
     .input-group {
       display: flex;
@@ -243,7 +265,6 @@
     .input-group label {
       font-size: 0.875rem;
       font-weight: 600;
-      color: var(--text-main);
     }
 
     .input-group input {
@@ -253,12 +274,6 @@
       border: 1px solid var(--border);
       font-size: 1rem;
       outline: none;
-      transition: border-color 0.2s ease;
-    }
-
-    .input-group input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
     .modal-actions {
@@ -273,10 +288,6 @@
       flex: 1;
     }
 
-    .btn-secondary:active {
-      background-color: #e2e8f0;
-    }
-
     /* Spinner */
     .spinner {
       width: 20px;
@@ -287,23 +298,26 @@
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 
-  <!-- Load Face-API.js via CDN -->
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body>
 
   <div class="app-container">
     <div class="header">
-      <h1>Registrasi Wajah</h1>
-      <p>Pendaftaran Data Wajah Karyawan</p>
+      <h1>Sistem Presensi Wajah</h1>
+      <p>Pendaftaran & Testing Pengenalan Client-Side</p>
     </div>
 
-    <!-- Viewfinder Kamera -->
+    <!-- Tab Switcher -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('register')">1. Registrasi Wajah</button>
+      <button class="tab-btn" onclick="switchTab('test')">2. Tes Presensi</button>
+    </div>
+
+    <!-- Viewfinder Kamera (Berbagi Kamera untuk Kedua Tab) -->
     <div class="viewfinder-wrapper">
       <video id="webcam" autoplay muted playsinline></video>
       <div id="cameraPlaceholder" class="camera-placeholder">
@@ -321,29 +335,39 @@
       Memuat model AI pengenal wajah...
     </div>
 
-    <!-- Tombol Rekam Wajah -->
-    <button id="btnScan" class="btn btn-primary" onclick="mulaiRekamWajah()" disabled>
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-      </svg>
-      Rekam Data Wajah
-    </button>
+    <!-- TAB 1: REGISTRASI -->
+    <div id="tabRegister" class="tab-content active">
+      <button id="btnScan" class="btn btn-primary" onclick="mulaiRekamWajah()" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        Rekam & Simpan Data Wajah
+      </button>
+    </div>
+
+    <!-- TAB 2: TES PRESI/PENGENALAN INSTAN -->
+    <div id="tabTest" class="tab-content">
+      <button id="btnTest" class="btn btn-success" onclick="tesPengenalanWajah()" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Scan & Kenali Wajah (Sat-Set)
+      </button>
+    </div>
   </div>
 
-  <!-- Modal Popup Konfirmasi & Nama -->
+  <!-- Modal Popup Registrasi -->
   <div id="modalInput" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
         <h2>Simpan Data Wajah</h2>
-        <p>Wajah berhasil terdeteksi! Masukkan nama karyawan untuk melanjutkan.</p>
+        <p>Wajah terdeteksi! Masukkan nama karyawan untuk didaftarkan.</p>
       </div>
-
       <div class="input-group">
         <label for="namaKaryawan">Nama Lengkap Karyawan</label>
         <input type="text" id="namaKaryawan" placeholder="Contoh: Budi Santoso" autocomplete="off" />
       </div>
-
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="tutupModal()">Batal</button>
         <button id="btnKirim" class="btn btn-primary" onclick="kirimDataKeSpreadsheet()" style="flex: 2;">
@@ -354,7 +378,6 @@
   </div>
 
   <script>
-    // URL Google Apps Script
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwzrexyIgiXvBB0NEGJzXS5FQWN33xBCSX6cwccB6W4cOVE_0Pwls0lTuMkaI07uP2oxA/exec";
 
     const video = document.getElementById('webcam');
@@ -362,6 +385,7 @@
     const faceGuide = document.getElementById('faceGuide');
     const statusBox = document.getElementById('statusBox');
     const btnScan = document.getElementById('btnScan');
+    const btnTest = document.getElementById('btnTest');
     const modalInput = document.getElementById('modalInput');
     const namaInput = document.getElementById('namaKaryawan');
     const btnKirim = document.getElementById('btnKirim');
@@ -369,8 +393,26 @@
 
     let currentVectorWajah = null;
     let isModelLoaded = false;
+    let registeredUsers = []; // Menyimpan database lokal hasil pencocokan instan
 
-    // 1. Inisialisasi Model AI dan Kamera (Mode CPU Safe)
+    // Switch Tab View
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabName === 'register') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tabRegister').classList.add('active');
+        updateStatus("Modus Registrasi: Posisikan wajah di dalam lingkaran", "info");
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tabTest').classList.add('active');
+        updateStatus("Modus Tes: Ambil presensi instan", "info");
+      }
+      faceGuide.classList.remove('active');
+    }
+
+    // 1. Inisialisasi Model AI & Kamera
     async function initApp() {
       try {
         updateStatus("Memuat model Face-API (CPU mode)...", "info");
@@ -381,47 +423,54 @@
         }
 
         const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-        
         await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
         await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
         await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
         isModelLoaded = true;
-        updateStatus("Model AI siap. Membuka kamera depan...", "info");
+        updateStatus("Model AI siap. Membuka kamera...", "info");
         
         startCamera();
+        muatDataUserLokal(); // Muat data registered users dari spreadsheet untuk pencocokan instan browser
       } catch (err) {
         updateStatus("Gagal memuat model AI: " + err.message, "error");
-        console.error("Init Error:", err);
       }
     }
 
-    // 2. Akses Kamera Depan HP
     function startCamera() {
       navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "user", 
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        }, 
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, 
         audio: false 
       })
       .then(stream => {
         video.srcObject = stream;
         cameraPlaceholder.style.display = 'none';
         btnScan.disabled = false;
+        btnTest.disabled = false;
         updateStatus("Posisikan wajah tepat di dalam lingkaran", "info");
       })
       .catch(err => {
-        updateStatus("Gagal mengakses kamera depan: " + err.message, "error");
-        console.error("Camera Error:", err);
+        updateStatus("Gagal mengakses kamera: " + err.message, "error");
       });
     }
 
-    // 3. Rekam & Deteksi Wajah
+    // 2. Ambil & Cache Data User dari Google Sheets untuk Komparasi Browser (Client-Side)
+    async function muatDataUserLokal() {
+      try {
+        const res = await fetch(`${URL_APPS_SCRIPT}?action=getUsers`);
+        const result = await res.json();
+        if (result.status === "success") {
+          registeredUsers = result.data;
+          console.log("Database user lokal berhasil disinkronisasi:", registeredUsers.length, "user");
+        }
+      } catch (err) {
+        console.warn("Gagal pramuat data user:", err);
+      }
+    }
+
+    // 3. TAB 1: Fitur Registrasi Wajah
     async function mulaiRekamWajah() {
       if (!isModelLoaded) return;
-
       btnScan.disabled = true;
       updateStatus("Mendeteksi wajah...", "info");
 
@@ -430,7 +479,7 @@
         .withFaceDescriptor();
 
       if (!detection) {
-        updateStatus("Wajah tidak ditemukan! Pastikan wajah terlihat jelas.", "error");
+        updateStatus("Wajah tidak ditemukan! Pastikan posisi pas.", "error");
         faceGuide.classList.remove('active');
         btnScan.disabled = false;
         return;
@@ -438,16 +487,56 @@
 
       faceGuide.classList.add('active');
       currentVectorWajah = Array.from(detection.descriptor);
-      
-      updateStatus("Wajah berhasil direkam!", "success");
+      updateStatus("Wajah terdeteksi!", "success");
       
       setTimeout(() => {
         bukaModal();
         btnScan.disabled = false;
-      }, 500);
+      }, 400);
     }
 
-    // 4. Modal Handler
+    // 4. TAB 2: Fitur Tes Pengenalan Wajah Client-Side Instan (Sat-Set)
+    async function tesPengenalanWajah() {
+      if (!isModelLoaded) return;
+      btnTest.disabled = true;
+      updateStatus("Memindai wajah untuk presensi...", "info");
+
+      const detection = await faceapi.detectSingleFace(video)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        updateStatus("Wajah tidak terdeteksi! Coba panggil ulang posisi.", "error");
+        btnTest.disabled = false;
+        return;
+      }
+
+      const inputDescriptor = detection.descriptor;
+      let matchFound = null;
+      let minDistance = 0.55; // Ambang batas kemiripan Euclidean Distance (Makin kecil makin mirip)
+
+      // Algoritma Komparasi Euclidean Distance Langsung di Browser
+      registeredUsers.forEach(user => {
+        if (!user.vectorWajah) return;
+        const dist = faceapi.euclideanDistance(inputDescriptor, user.vectorWajah);
+        if (dist < minDistance) {
+          minDistance = dist;
+          matchFound = user.nama;
+        }
+      });
+
+      if (matchFound) {
+        faceGuide.classList.add('active');
+        updateStatus(`TERKENALI: Hello, ${matchFound}! (Dist: ${minDistance.toFixed(2)})`, "success");
+      } else {
+        faceGuide.classList.remove('active');
+        updateStatus("Wajah tidak dikenali dalam database!", "error");
+      }
+
+      btnTest.disabled = false;
+    }
+
+    // Modal Control & API Sender
     function bukaModal() {
       modalInput.classList.add('active');
       namaInput.value = '';
@@ -457,40 +546,26 @@
     function tutupModal() {
       modalInput.classList.remove('active');
       faceGuide.classList.remove('active');
-      updateStatus("Posisikan wajah tepat di dalam lingkaran", "info");
     }
 
-    // 5. Kirim Data ke Google Apps Script (doPost) - Ditambahkan action: "register"
     async function kirimDataKeSpreadsheet() {
       const nama = namaInput.value.trim();
-
-      if (!nama) {
-        alert("Silakan masukkan nama karyawan terlebih dahulu!");
-        namaInput.focus();
-        return;
-      }
-
-      if (!currentVectorWajah) {
-        alert("Data wajah belum terekam. Silakan rekam ulang.");
-        tutupModal();
-        return;
-      }
+      if (!nama) { alert("Masukkan nama karyawan!"); return; }
+      if (!currentVectorWajah) return;
 
       btnKirim.disabled = true;
       btnKirimText.innerHTML = `<div class="spinner"></div> Menyimpan...`;
 
       try {
         const payload = {
-          action: "register", // Properti pendukung arsitektur 2-sheet (User & Presensi)
+          action: "register",
           nama: nama,
           vectorWajah: currentVectorWajah
         };
 
         const response = await fetch(URL_APPS_SCRIPT, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         });
 
@@ -498,15 +573,15 @@
 
         if (result.status === "success") {
           tutupModal();
-          updateStatus(`Berhasil! Data ${nama} telah tersimpan di sheet User.`, "success");
+          updateStatus(`Berhasil! Data ${nama} telah didaftarkan.`, "success");
+          // Tambahkan data ke local cache agar langsung bisa dites di Tab Kanan
+          registeredUsers.push({ nama: nama, vectorWajah: currentVectorWajah });
           currentVectorWajah = null;
         } else {
-          alert("Gagal menyimpan ke Google Sheets: " + result.message);
+          alert("Gagal: " + result.message);
         }
-
       } catch (err) {
-        console.error("Fetch Error:", err);
-        alert("Terjadi kesalahan saat mengirim data. Pastikan jaringan stabil.");
+        alert("Terjadi kesalahan koneksi.");
       } finally {
         btnKirim.disabled = false;
         btnKirimText.innerText = "Kirim Data Wajah";
