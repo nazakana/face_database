@@ -224,7 +224,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <!-- Pustaka dimuat langsung tanpa atribut defer -->
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body>
 
@@ -337,17 +338,23 @@
 
   async function initApp() {
     try {
+      updateStatus("Memeriksa pustaka face-api...", "info");
+
+      if (typeof faceapi === 'undefined') {
+        throw new Error("Library face-api.js belum siap. Periksa koneksi internet Anda.");
+      }
+
       updateStatus("Memuat model AI ringan (Akselerasi GPU)...", "info");
       
-      // OPTIMALISASI 1: Aktifkan WebGL (GPU) alih-alih CPU
-      if (typeof faceapi !== 'undefined' && faceapi.tf) {
+      // OPTIMALISASI 1: WebGL Backend (GPU)
+      if (faceapi.tf) {
         await faceapi.tf.setBackend('webgl');
         await faceapi.tf.ready();
       }
 
       const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
       
-      // OPTIMALISASI 2: Gunakan tinyFaceDetector sebagai pengganti ssdMobilenetv1
+      // OPTIMALISASI 2: TinyFaceDetector ringan
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
       await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
@@ -358,13 +365,8 @@
       startCamera();
       muatDataUserLokal();
     } catch (err) {
-      // Fallback ke CPU jika WebGL tidak didukung perangkat
-      try {
-        await faceapi.tf.setBackend('cpu');
-        await faceapi.tf.ready();
-        updateStatus("Memuat mode CPU fallback...", "info");
-      } catch(e) {}
-      updateStatus("Gagal memuat model AI: " + err.message, "error");
+      console.error(err);
+      updateStatus("Gagal memuat sistem: " + err.message, "error");
     }
   }
 
@@ -390,7 +392,7 @@
       const res = await fetch(`${URL_APPS_SCRIPT}?action=getUsers`);
       const result = await res.json();
       
-      const rawData = result.data || result; // Menangani respon array maupun objek
+      const rawData = result.data || result;
       
       if (Array.isArray(rawData)) {
         registeredUsers = rawData.map(user => {
@@ -410,10 +412,10 @@
     }
   }
 
-  // OPTIMALISASI 3: Pengaturan TinyFaceDetectorOptions agar scanning cepat
+  // OPTIMALISASI 3: Ukuran pemindaian 224px (Super Cepat)
   const detectorOptions = new faceapi.TinyFaceDetectorOptions({
-    inputSize: 224,      // Ukuran pemindaian lebih kecil = Jauh Lebih Cepat (Default: 416)
-    scoreThreshold: 0.5  // Ambang batas deteksi awal
+    inputSize: 224,
+    scoreThreshold: 0.5
   });
 
   async function mulaiRekamWajah() {
@@ -447,7 +449,7 @@
     btnTest.disabled = true;
     updateStatus("Memindai wajah...", "info");
 
-    const t0 = performance.now(); // Ukur kecepatan eksekusi
+    const t0 = performance.now();
 
     const detection = await faceapi.detectSingleFace(video, detectorOptions)
       .withFaceLandmarks()
@@ -480,7 +482,7 @@
     });
 
     const t1 = performance.now();
-    const durasi = ((t1 - t0) / 1000).toFixed(2); // Menghitung detik
+    const durasi = ((t1 - t0) / 1000).toFixed(2);
 
     if (matchFound) {
       faceGuide.classList.add('active');
